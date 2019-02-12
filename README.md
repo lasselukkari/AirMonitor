@@ -1,68 +1,42 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# AirMonitor
+AirMonitor is an ESP32/Arduino CO2, temperature and humidity data logger.
 
-## Available Scripts
+By default it logs the measurements every 10 minutes and keeps a history for the past 7 days. Instead of pushing the data to a cloud service AirMonitor persist the historical data to the internal flash memory. To erase the stored data hold the boot mode button for 5 seconds.
 
-In the project directory, you can run:
+The device can be configured to be an access point or it can be connected to another network. The data can be viewed using th build in user interface or intergrated to another system using the JSON REST api.
 
-### `npm start`
+All dependencies have been vendored in. The sketch directory should be ready for uploading.
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Required Parts
+* ESP32 Development Noard
+* SHT31-D Temperature & Humidity Sensor
+* MH-Z19 Infrared CO2 Sensor
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+## Wiring
+Wired using a standard SHT31-D breakout board. The MH-Z19 uses the serial port.
+<img src="https://i.imgur.com/bwVV0hC.png" width="500" />
 
-### `npm test`
+## User Interface
+<img src="https://i.imgur.com/TgfNmmM.png" width="500" />
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## REST API
+### GET api/current
+```json
+{  
+  "co2": 636,
+  "temperature": 27.68,
+  "humidity": 28.09,
+  "interval": 5000
+}
+```
 
-### `npm run build`
-
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+### GET api/history
+```json
+{  
+  "co2": [ 658, 656, 653, 649, 647 ],
+  "temperature": [ 27.58, 27.60, 27.61, 27.62, 27.63 ],
+  "humidity": [ 28.38, 28.34, 28.30, 28.31, 28.29 ],
+  "interval": 600000,
+  "age": 2717
+}
+```
