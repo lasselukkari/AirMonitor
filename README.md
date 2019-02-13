@@ -3,7 +3,7 @@ AirMonitor is an ESP32/Arduino CO2, temperature and humidity data logger.
 
 By default it logs the measurements every 10 minutes and keeps a history for the past 7 days. Instead of pushing the data to a cloud service AirMonitor persist the historical data to the internal flash memory. To erase the stored data hold the boot mode button for 5 seconds.
 
-The device can be configured to be an access point or it can be connected to another network. The data can be viewed using th build in user interface or intergrated to another system using the JSON REST api.
+The device can be configured to be an access point or it can be connected to another network. The data can be viewed using the build in user interface or intergrated to another system using the JSON REST api.
 
 All dependencies have been vendored in. The sketch directory should be ready for uploading.
 
