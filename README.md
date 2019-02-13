@@ -8,7 +8,7 @@ The device can be configured to be an access point or it can be connected to ano
 All dependencies have been vendored in. The sketch directory should be ready for uploading.
 
 ## Required Parts
-* ESP32 Development Noard
+* ESP32 Development Board
 * SHT31-D Temperature & Humidity Sensor
 * MH-Z19 Infrared CO2 Sensor
 
