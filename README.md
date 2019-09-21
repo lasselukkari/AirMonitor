@@ -1,7 +1,7 @@
 # AirMonitor
 AirMonitor is an ESP32/Arduino CO2, TVOC, temperature and humidity data logger.
 
-The device can be configured to be an access point or it can be connected to another network. The data can be viewed using th build in html user interface.
+The device can be configured to be an access point or it can be connected to another network. The data can be viewed using the build in html user interface.
 
 ## Parts
 * ESP32 development board
