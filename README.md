@@ -1,42 +1,23 @@
 # AirMonitor
-AirMonitor is an ESP32/Arduino CO2, temperature and humidity data logger.
+AirMonitor is an ESP32/Arduino CO2, TVOC, temperature and humidity data logger.
 
-By default it logs the measurements every 10 minutes and keeps a history for the past 7 days. Instead of pushing the data to a cloud service AirMonitor persist the historical data to the internal flash memory. To erase the stored data hold the boot mode button for 5 seconds.
+The device can be configured to be an access point or it can be connected to another network. The data can be viewed using th build in html user interface.
 
-The device can be configured to be an access point or it can be connected to another network. The data can be viewed using the build in user interface or intergrated to another system using the JSON REST api.
+## Parts
+* ESP32 development board
+* MicroSD card module
+* DS1307 RTC module
+* HDC1080 temperature & humidity sensor module
+* CCS811 gas sensor module
 
-All dependencies have been vendored in. The sketch directory should be ready for uploading.
+### Libraries
+The sketch directory is ready for uploading after you have installed the required libraries.
 
-## Required Parts
-* ESP32 Development Board
-* SHT31-D Temperature & Humidity Sensor
-* MH-Z19 Infrared CO2 Sensor
-
-## Wiring
-Wired using a standard SHT31-D breakout board. The MH-Z19 uses the serial port.
-<img src="https://i.imgur.com/bwVV0hC.png" width="500" />
+* [Rtc](https://github.com/Makuna/Rtc)
+* [SdFat](https://github.com/adafruit/SdFat)
+* [aWOT](https://github.com/lasselukkari/aWOT)
+* [ClosedCube HDC1080](https://github.com/closedcube/ClosedCube_HDC1080_Arduino)
+* [SparkFun_CCS811](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library)
 
 ## User Interface
-<img src="https://i.imgur.com/TgfNmmM.png" width="500" />
-
-## REST API
-### GET api/current
-```json
-{  
-  "co2": 636,
-  "temperature": 27.68,
-  "humidity": 28.09,
-  "interval": 5000
-}
-```
-
-### GET api/history
-```json
-{  
-  "co2": [ 658, 656, 653, 649, 647 ],
-  "temperature": [ 27.58, 27.60, 27.61, 27.62, 27.63 ],
-  "humidity": [ 28.38, 28.34, 28.30, 28.31, 28.29 ],
-  "interval": 600000,
-  "age": 2717
-}
-```
+<img src="https://i.imgur.com/JcDaDQT.jpg" width="500" />
