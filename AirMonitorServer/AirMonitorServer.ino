@@ -1,76 +1,153 @@
+#include <SPI.h>
 #include <WiFi.h>
 #include <Wire.h>
-#include <FS.h>
-#include <SPIFFS.h>
+#include <RtcDS1307.h>           // v2.3.3 https://github.com/Makuna/Rtc
+#include <SdFat.h>               // v1.2.3 https://github.com/adafruit/SdFat
+#include <aWOT.h>                // v1.1.0 https://github.com/lasselukkari/aWOT
+#include <ClosedCube_HDC1080.h>  // v1.3.2 https://github.com/closedcube/ClosedCube_HDC1080_Arduino/releases
+#include <SparkFunCCS811.h>      // v1.0.7 https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library
+#include "StaticFiles.h"
 
-#include "aJSON.h"
-#include "aWOT.h"
-#include "MHZ19.h"
-#include "Adafruit_SHT31.h"
+#define BASE_DIR "/airmon"
 
-char ssid[] = "";               // leave empty to disable
+char ssid[] = "";                // leave empty to disable
 char pass[] = "";
-char apSsid[] = "AirMonitor";   // leave empty to disable
+char apSsid[] = "AirMonitor";    // leave empty to disable
 char apPass[] = "AirMonitor";
 
-int resetPin = 0;               // press the boot mode pin for 5 seconds to reset the measurement history
-int rxPin = 16;                 // RX2
-int txPin = 17;                 // TX2
-
-int historyLenght = 1008;       // minutes in a week / 10
-int recordInterval = 600000;    // ten minutes
-int measurementInterval = 5000; // five seconds
+int resetPin = 0;                // press the boot mode pin for 5 seconds to reset the measurement history
+int recordInterval = 300000;     // 5 minutes
+int measurementInterval = 10000; // 10 seconds
 
 int measurementCount = 0;
 int failCount = 0;
 int maxFails = 5;
 
+int co2;
+int tvoc;
+float temperature;
+float humidity;
+int timestamp;
+
 int co2Sum = 0;
+int tvocSum = 0;
 float temperatureSum = 0.0;
 float humiditySum = 0.0;
 
 unsigned long lastMeasurement = 0;
 unsigned long lastRecord = 0;
 
-aJsonObject* current;
-aJsonObject* history;
+byte * error;
 
+ClosedCube_HDC1080 hdc1080;
+CCS811 ccs811(0x5A);
+RtcDS1307<TwoWire> Rtc(Wire);
+SdFat SD;
 WiFiServer server(80);
-WebApp app;
-MHZ19_uart mhz19;
-Adafruit_SHT31 sht31;
+Application app;
 
-void getCurrent(Request &req, Response &res) {
-  res.success("application/json");
-  aJsonStream stream(&res);
-  aJson.print(current, &stream);
+void setTime(Request &req, Response &res) {
+  byte buffer[32];
+  if (!req.body(buffer, 32)) {
+    return res.sendStatus(400);
+  }
+
+  RtcDateTime time = RtcDateTime(atoi((char *)&buffer));
+  Rtc.SetDateTime(time);
+
+  lastMeasurement = 0;
+
+  res.sendStatus(204);
 }
 
-void getHistory(Request &req, Response &res) {
-  res.success("application/json");
-  aJson.getObjectItem(history, "age")->valueint = millis() - lastRecord;
-  aJsonStream stream(&res);
-  aJson.print(history, &stream);
+void getCurrent(Request &req, Response &res) {
+  res.set("Content-Type", "application/binary");
+  res.write((byte *)&co2, 4);
+  res.write((byte *)&tvoc, 4);
+  res.write((byte *)&temperature, 4);
+  res.write((byte *)&humidity, 4);
+  res.write((byte *)&timestamp, 4);
+}
+
+void getRange(Request &req, Response &res) {
+  char startBuf[16];
+  if (!req.query("start", startBuf, 16)) {
+    return res.sendStatus(400);
+  }
+
+  char endBuf[16];
+  if (!req.query("end", endBuf, 16)) {
+    return res.sendStatus(400);
+  }
+
+  int start = atoi(startBuf);
+  int end = atoi(endBuf);
+
+  File root = SD.open(BASE_DIR);
+  if (!root) {
+    return res.sendStatus(500);
+  }
+
+  if (!root.isDirectory()) {
+    return res.sendStatus(500);
+  }
+
+  File file = root.openNextFile();
+  if (!file) {
+    return;
+  }
+
+  if (file.isDirectory()) {
+    return res.sendStatus(500);
+  }
+
+  res.set("Content-Type", "application/binary");
+
+  while (file) {
+    char filename[16];
+    if (!file.getName(filename, 16)) {
+      return res.sendStatus(500);
+    }
+
+    char epochDay[6];
+    strncpy(epochDay, filename, 5);
+    epochDay[5] = '\0';
+
+    if (atoi(epochDay) >= start) {
+      if (atoi(epochDay) > end) {
+        break;
+      }
+
+      while (file.available()) {
+        res.write(file.read());
+      }
+    }
+
+    file.close();
+
+    file = root.openNextFile();
+  }
 }
 
 void runMeasurements() {
-  int co2 = mhz19.getPPM();
-  float temperature = sht31.readTemperature();
-  float humidity = sht31.readHumidity();
-
-  if (co2 != -1) {
-    aJson.getObjectItem(current, "co2")->valueint = co2;
-    aJson.getObjectItem(current, "temperature")->valuefloat = temperature;
-    aJson.getObjectItem(current, "humidity")->valuefloat = humidity;
-
-    co2Sum += co2;
-    temperatureSum += temperature;
-    humiditySum += humidity;
-    failCount = 0;
-    measurementCount++;
-  } else if (failCount++ == maxFails) {
-    ESP.restart();
+  if (!ccs811.dataAvailable()) {
+    return;
   }
+
+  ccs811.readAlgorithmResults();
+
+  co2 = ccs811.getCO2();
+  tvoc = ccs811.getTVOC();
+  temperature = hdc1080.readTemperature();
+  humidity = hdc1080.readHumidity();
+  timestamp = Rtc.GetDateTime().Epoch32Time();
+
+  co2Sum += co2;
+  tvocSum += tvoc;
+  temperatureSum += temperature;
+  humiditySum += humidity;
+  failCount = 0;
+  measurementCount++;
 }
 
 void recordMeasurements() {
@@ -78,61 +155,41 @@ void recordMeasurements() {
     return;
   }
 
-  aJsonObject* co2 = aJson.getObjectItem(history, "co2");
-  aJsonObject* co2Average = aJson.createItem(co2Sum / measurementCount);
-  aJson.addItemToArray( co2, co2Average);
-  while (aJson.getArraySize(co2) > historyLenght) {
-    aJson.deleteItemFromArray(co2, 0);
+  int co2Avg = co2Sum / measurementCount;
+  int tvocAvg = tvocSum / measurementCount;
+  float temperatureAvg = temperatureSum / measurementCount;
+  float humidityAvg = humiditySum / measurementCount;
+  int nowTime = Rtc.GetDateTime().Epoch32Time();
+  int epochDay = nowTime / 86400;
+  char datestring[40];
+
+  snprintf(datestring, 40, BASE_DIR "/%u.bin", epochDay);
+
+  File file = SD.open(datestring, FILE_WRITE);
+  if (!file) {
+    Serial.println("Failed to open file for appending");
+    return;
   }
-  co2Sum = 0;
 
-  aJsonObject* temperature = aJson.getObjectItem(history, "temperature");
-  aJsonObject* temperatureAverage = aJson.createItem(temperatureSum / measurementCount);
-  aJson.addItemToArray(temperature, temperatureAverage);
-  while (aJson.getArraySize(temperature) > historyLenght) {
-    aJson.deleteItemFromArray(temperature, 0);
-  }
-  temperatureSum = 0;
-
-  aJsonObject* humidity = aJson.getObjectItem(history, "humidity");
-  aJsonObject* humidityAverage = aJson.createItem(humiditySum / measurementCount);
-  aJson.addItemToArray(humidity, humidityAverage);
-  while (aJson.getArraySize(humidity) > historyLenght) {
-    aJson.deleteItemFromArray(humidity, 0);
-  }
-  humiditySum = 0;
-
-  measurementCount = 0;
-
-  File file = SPIFFS.open("/history.json", FILE_WRITE);
-  aJsonStream stream(&file);
-  aJson.print(history, &stream);
+  file.write((byte *)&co2Avg, 4) &&
+  file.write((byte *)&tvocAvg, 4) &&
+  file.write((byte *)&temperatureAvg, 4) &&
+  file.write((byte *)&humidityAvg, 4) &&
+  file.write((byte *)&nowTime, 4) &&
   file.close();
+
+  co2Sum = 0;
+  tvocSum = 0;
+  temperatureSum = 0;
+  humiditySum = 0;
+  measurementCount = 0;
 }
 
-void setupMeasurements() {
-  SPIFFS.begin(true);
-  File file = SPIFFS.open("/history.json");
-  aJsonStream stream(&file);
-  history = aJson.parse(&stream);
-  file.close();
-
-  if (!history) {
-    history = aJson.createObject();
-    aJson.addItemToObject(history, "co2", aJson.createArray());
-    aJson.addItemToObject(history, "temperature", aJson.createArray());
-    aJson.addItemToObject(history, "humidity", aJson.createArray());
-    aJson.addNumberToObject(history, "interval", recordInterval);
-    aJson.addNumberToObject(history, "age", 0);
-  } else {
-    aJson.getObjectItem(history, "interval")->valueint = recordInterval;
-  }
-
-  current = aJson.createObject();
-  aJson.addNumberToObject(current, "co2", 0);
-  aJson.addNumberToObject(current, "temperature", 0.0);
-  aJson.addNumberToObject(current, "humidity", 0.0);
-  aJson.addNumberToObject(current, "interval", measurementInterval);
+void removeData() {
+  File root = SD.open(BASE_DIR);
+  root.rmRfStar();
+  SD.mkdir(BASE_DIR);
+  Serial.println("All files removed");
 }
 
 void setupAccessPoint() {
@@ -159,19 +216,23 @@ void setupWifi() {
   }
 }
 
-void setupInputs() {
+void setupHardware() {
   pinMode(resetPin, INPUT);
 
-  sht31.begin(0x44);
+  SD.begin(SS, SD_SCK_MHZ(10));
+  SD.mkdir(BASE_DIR);
 
-  mhz19.begin(rxPin, txPin);
-  mhz19.setAutoCalibration(false);
+  Wire.begin();
+  Rtc.Begin();
+  ccs811.begin();
+  hdc1080.begin(0x40);
 }
 
 void setupServer() {
-  app.get("api/current", &getCurrent);
-  app.get("api/history", &getHistory);
-  app.use(staticFiles());
+  app.get("/api/current", &getCurrent);
+  app.get("/api/history", &getRange);
+  app.put("/api/time", &setTime);
+  app.route(staticFiles());
 
   server.begin();
 }
@@ -180,18 +241,11 @@ void setup() {
   Serial.begin(115200);
   setupAccessPoint();
   setupWifi();
-  setupMeasurements();
-  setupInputs();
+  setupHardware();
   setupServer();
 }
 
 void loop() {
-  WiFiClient client = server.available();
-
-  if (client.connected()) {
-    app.process(&client);
-  }
-
   unsigned long now = millis();
 
   if (now - lastMeasurement > measurementInterval) {
@@ -206,8 +260,14 @@ void loop() {
 
   while (digitalRead(resetPin) == LOW) {
     if (millis() - now > 5000) {
-      SPIFFS.remove("/history.json");
-      ESP.restart();
+      removeData();
+      break;
     }
+  }
+
+  WiFiClient client = server.available();
+
+  if (client.connected()) {
+    app.process(&client);
   }
 }
