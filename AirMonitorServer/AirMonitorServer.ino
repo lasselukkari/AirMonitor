@@ -224,6 +224,7 @@ void setupHardware() {
 
   Wire.begin();
   Rtc.Begin();
+  Rtc.SetIsRunning(true);
   ccs811.begin();
   hdc1080.begin(0x40);
 }
