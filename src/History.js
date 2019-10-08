@@ -6,16 +6,36 @@ import './App.css';
 
 class Hiatory extends PureComponent {
   units = { CO2: 'ppm', TVOC: 'ppm', Temperature: '℃', Humidity: '%' }
+  start = new Date()
+  end = new Date()
+  epochWeek = (date) => Math.floor(date.getTime() / 1000 / 86400);
 
-  getRange = async ({ start, end }) => {
-    const epochWeek = (date) => Math.floor(date.getTime() / 1000 / 86400);
-    const response = await fetch(`/api/history?start=${epochWeek(start)}&end=${epochWeek(end)}`);
+  changeRange = ({ start, end }) => {
+    this.start = start;
+    this.end = end;
+
+    this.fetchHistory();
+  }
+
+  fetchHistory = async () => {
+    const start = this.epochWeek(this.start);
+    const end = this.epochWeek(this.end);
+
+    const response = await fetch(`/api/history?start=${start}&end=${end}`);
     if (!response.ok) {
       throw new Error(response.statusText);
     }
 
     const buffer = await response.arrayBuffer();
     this.setState({ buffer })
+  }
+
+  async pollHistory() {
+    try {
+      this.fetchHistory();
+    } finally {
+      setTimeout(() => this.pollHistory(), 300000);
+    }
   }
 
   getChart() {
@@ -47,14 +67,14 @@ class Hiatory extends PureComponent {
   }
 
   componentDidMount() {
-    this.getRange({ start: new Date(), end: new Date() });
+    this.pollHistory();
   }
 
   render() {
     return (
       <React.Fragment>
         <DatetimeRangePicker
-          onChange={this.getRange}
+          onChange={this.changeRange}
           timeFormat={false}
           className={"range-picker"}
           closeOnSelect
