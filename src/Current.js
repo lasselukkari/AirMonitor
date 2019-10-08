@@ -12,16 +12,16 @@ class Current extends PureComponent {
     this.setState({ ...transform.getOne(buffer) });
   }
 
-  async pollCurrent(interval) {
+  async pollCurrent() {
     try {
       this.fetchCurrent();
     } finally {
-      setTimeout(async () => this.pollCurrent(interval), interval);
+      setTimeout(async () => this.pollCurrent(), 5000);
     }
   }
 
   componentDidMount() {
-    this.pollCurrent(5000);
+    this.pollCurrent();
   }
 
   syncClock = async () => {
