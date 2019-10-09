@@ -1,11 +1,11 @@
 #include <SPI.h>
 #include <WiFi.h>
 #include <Wire.h>
-#include <RtcDS1307.h>           // v2.3.3 https://github.com/Makuna/Rtc
-#include <SdFat.h>               // v1.2.3 https://github.com/adafruit/SdFat
-#include <aWOT.h>                // v1.1.0 https://github.com/lasselukkari/aWOT
-#include <ClosedCube_HDC1080.h>  // v1.3.2 https://github.com/closedcube/ClosedCube_HDC1080_Arduino/releases
-#include <SparkFunCCS811.h>      // v1.0.7 https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library
+#include <RtcDS1307.h>           // v2.3.3  https://github.com/Makuna/Rtc
+#include <SdFat.h>               // v1.2.3  https://github.com/adafruit/SdFat
+#include <aWOT.h>                // v1.1.0  https://github.com/lasselukkari/aWOT
+#include <ClosedCube_HDC1080.h>  // v1.3.2  https://github.com/closedcube/ClosedCube_HDC1080_Arduino/releases
+#include "ccs811.h"              // v10.0.0 https://github.com/maarten-pennings/CCS811
 #include "StaticFiles.h"
 
 #define BASE_DIR "/airmon"
@@ -40,7 +40,7 @@ unsigned long lastRecord = 0;
 byte * error;
 
 ClosedCube_HDC1080 hdc1080;
-CCS811 ccs811(0x5A);
+CCS811 ccs811(-1);
 RtcDS1307<TwoWire> Rtc(Wire);
 SdFat SD;
 WiFiServer server(80);
@@ -130,14 +130,15 @@ void getRange(Request &req, Response &res) {
 }
 
 void runMeasurements() {
-  if (!ccs811.dataAvailable()) {
+  uint16_t eco2, etvoc, errstat, raw;
+  ccs811.read(&eco2, &etvoc, &errstat, &raw);
+
+  if (errstat != CCS811_ERRSTAT_OK) {
     return;
   }
 
-  ccs811.readAlgorithmResults();
-
-  co2 = ccs811.getCO2();
-  tvoc = ccs811.getTVOC();
+  co2 = (int) eco2;
+  tvoc =(int) etvoc;
   temperature = hdc1080.readTemperature();
   humidity = hdc1080.readHumidity();
   timestamp = Rtc.GetDateTime().Epoch32Time();
@@ -223,9 +224,14 @@ void setupHardware() {
   SD.mkdir(BASE_DIR);
 
   Wire.begin();
+
   Rtc.Begin();
   Rtc.SetIsRunning(true);
+
+  ccs811.set_i2cdelay(50);
   ccs811.begin();
+  ccs811.start(CCS811_MODE_10SEC);
+
   hdc1080.begin(0x40);
 }
 
