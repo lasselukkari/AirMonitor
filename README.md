@@ -16,8 +16,8 @@ The sketch directory is ready for uploading after you have installed the require
 * [Rtc](https://github.com/Makuna/Rtc)
 * [SdFat](https://github.com/adafruit/SdFat)
 * [aWOT](https://github.com/lasselukkari/aWOT)
-* [ClosedCube HDC1080](https://github.com/closedcube/ClosedCube_HDC1080_Arduino)
-* [SparkFun_CCS811](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library)
+* [HDC1080](https://github.com/closedcube/ClosedCube_HDC1080_Arduino)
+* [CCS811](https://github.com/maarten-pennings/CCS811)
 
 ## User Interface
 <img src="https://i.imgur.com/JcDaDQT.jpg" width="500" />
