@@ -5,7 +5,7 @@
 #include <SdFat.h>               // v1.2.3  https://github.com/adafruit/SdFat
 #include <aWOT.h>                // v1.1.0  https://github.com/lasselukkari/aWOT
 #include <ClosedCube_HDC1080.h>  // v1.3.2  https://github.com/closedcube/ClosedCube_HDC1080_Arduino/releases
-#include "ccs811.h"              // v10.0.0 https://github.com/maarten-pennings/CCS811
+#include <ccs811.h>              // v10.0.0 https://github.com/maarten-pennings/CCS811
 #include "StaticFiles.h"
 
 #define BASE_DIR "/airmon"

@@ -1,0 +1,59 @@
+.value-panel {
+  color: #ffffff;
+  width: 25%;
+  display: inline-block;
+}
+
+.value-container {
+  padding: 40px;
+}
+
+.value-container h2 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.timestamp{
+  background: #0DAB76;
+  color: #fff;
+  font-size: 16px;
+  text-align: right;
+  padding: 10px;
+}
+
+.timestamp button {
+  background:none;
+  border:none;
+  margin:0;
+  padding:0;
+  cursor: pointer;
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.value {
+  text-align: right;
+  font-size: 24px;
+  margin-top: 20px;
+}
+
+@media (max-width: 1200px) {
+  .value-panel {
+    width: 50%;
+  }
+
+  .value-container {
+    padding: 20px;
+  }
+
+  .value-container h2 {
+    font-size: 24px;
+  }
+
+  .value {
+    margin-top: 10px;
+    font-size: 18px;
+    margin-top: 0;
+  }
+}

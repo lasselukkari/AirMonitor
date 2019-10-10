@@ -1,0 +1,26 @@
+.history-panel {
+  margin-top: 60px;
+  background: #fff;
+}
+
+.history-title {
+  margin: 20px;
+}
+
+.form-control {
+  padding: 15px 22px;
+  margin: 0 5px;
+}
+  
+.range-picker {
+  text-align: center;
+}
+  
+.rdt {
+  display: inline-block;
+}
+
+.rdtPicker {
+  top: -270px;
+}
+  
