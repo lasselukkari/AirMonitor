@@ -1,7 +1,11 @@
 import React, { PureComponent } from 'react';
 import transform from './transform'
+import Colors from './Colors'
+import './Current.css'
 
 class Current extends PureComponent {
+  units = { CO2: 'ppm', TVOC: 'ppm', Temperature: '℃', Humidity: '%' }
+
   async fetchCurrent() {
     const response = await fetch('/api/current');
     if (!response.ok) {
@@ -33,21 +37,33 @@ class Current extends PureComponent {
     this.fetchCurrent();
   }
 
+  getPanel(title, color) {
+    return (
+      <div className="value-panel" style={{ backgroundColor: color }}>
+        <div className="value-container">
+          <h2>{title}</h2>
+          <div className="value">
+            {this.state[title]} {this.units[title]}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   render() {
     if (!this.state) {
       return null;
     }
 
-    const { CO2, TVOC, Temperature, Humidity, time } = this.state;
-
     return (
       <React.Fragment>
-        <h2 style={{ textAlign: "center" }}>
-          Time: {time} <button onClick={this.syncClock}>Sync RTC</button> <br />
-        </h2>
-        <h3 style={{ textAlign: "center" }}>
-          CO2: {CO2} TVOC: {TVOC} Temperature: {Temperature} Humidity: {Humidity}
-        </h3>
+        <div className="timestamp">
+          <button title="Sync RTC" onClick={this.syncClock}>{this.state.time}</button>
+        </div>
+        {this.getPanel('CO2', Colors.C02)}
+        {this.getPanel('TVOC', Colors.TVOC)}
+        {this.getPanel('Temperature', Colors.Temperature)}
+        {this.getPanel('Humidity', Colors.Humidity)}
       </React.Fragment>
     )
   }

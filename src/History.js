@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DatetimeRangePicker from 'react-datetime-range-picker';
+import Colors from './Colors'
 import transform from './transform'
-import './App.css';
+import './History.css';
 
 class Hiatory extends PureComponent {
   units = { CO2: 'ppm', TVOC: 'ppm', Temperature: '℃', Humidity: '%' }
@@ -40,26 +41,25 @@ class Hiatory extends PureComponent {
 
   getChart() {
     if (!this.state || !this.state.buffer) {
-      return (<h3>Loading...</h3>)
+      return (<h3 className="history-title">Loading...</h3>)
     }
 
     if (this.state.buffer.byteLength <= 0) {
-      return (<h3>No data for selected range</h3>)
+      return (<h3 className="history-title">No data for selected range</h3>)
     }
 
     return (
-      <div style={{ height: "460px" }}>
-        <ResponsiveContainer>
-          <LineChart data={transform.getMany(this.state.buffer, 50)} >
-            <XAxis dataKey="time" />
+      <div className="history-panel">
+        <ResponsiveContainer height={300}>
+          <LineChart data={transform.getMany(this.state.buffer)} >
+            <XAxis dataKey="time" tick={false}/>
             <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right" />
+            <YAxis yAxisId="right" orientation="right"/>
             <Tooltip formatter={(value, name) => `${value} ${this.units[name]}`} />
-            <Line yAxisId="left" dot={false} type="monotone" dataKey="CO2" stroke="#143642" />
-            <Line yAxisId="left" dot={false} type="monotone" dataKey="TVOC" stroke="#0F8B8D" />
-            <Line yAxisId="right" dot={false} type="monotone" dataKey="Temperature" stroke="#EC9A29" />
-            <Line yAxisId="right" dot={false} type="monotone" dataKey="Humidity" stroke="#A8201A" />
-            <Legend />
+            <Line yAxisId="left" dot={false} type="monotone" dataKey="CO2" stroke={Colors.C02} />
+            <Line yAxisId="left" dot={false} type="monotone" dataKey="TVOC" stroke={Colors.TVOC} />
+            <Line yAxisId="right" dot={false} type="monotone" dataKey="Temperature" stroke={Colors.Temperature} />
+            <Line yAxisId="right" dot={false} type="monotone" dataKey="Humidity" stroke={Colors.Humidity} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -73,13 +73,13 @@ class Hiatory extends PureComponent {
   render() {
     return (
       <React.Fragment>
+        {this.getChart()}
         <DatetimeRangePicker
           onChange={this.changeRange}
           timeFormat={false}
           className={"range-picker"}
           closeOnSelect
         />
-        {this.getChart()}
       </React.Fragment>
     )
   }
