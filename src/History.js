@@ -73,7 +73,6 @@ class Hiatory extends PureComponent {
   render() {
     return (
       <React.Fragment>
-
         {this.getChart()}
         <DatetimeRangePicker
           onChange={this.changeRange}
@@ -81,7 +80,6 @@ class Hiatory extends PureComponent {
           className={"range-picker"}
           closeOnSelect
         />
-
       </React.Fragment>
     )
   }
