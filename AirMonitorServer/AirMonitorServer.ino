@@ -37,8 +37,6 @@ float humiditySum = 0.0;
 unsigned long lastMeasurement = 0;
 unsigned long lastRecord = 0;
 
-byte * error;
-
 ClosedCube_HDC1080 hdc1080;
 CCS811 ccs811(-1);
 RtcDS1307<TwoWire> Rtc(Wire);
