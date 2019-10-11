@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import Color from 'color'
 import transform from './transform'
 import Colors from './Colors'
 import './Current.css'
@@ -38,9 +39,14 @@ class Current extends PureComponent {
   }
 
   getPanel(title, color) {
+    const { setSelected, selected } = this.props;
+    const lightColor = Color(color).alpha(0.5).lighten(0.5);
+    const panelStyle = { backgroundColor: color };
+    const containerStyle = { backgroundColor: selected === title ? lightColor : color };
+
     return (
-      <div className="value-panel" style={{ backgroundColor: color }}>
-        <div className="value-container">
+      <div onClick={() => setSelected(title)} className="value-panel" style={panelStyle}>
+        <div className="value-container" style={containerStyle}>
           <h2>{title}</h2>
           <div className="value">
             {this.state[title]} {this.units[title]}

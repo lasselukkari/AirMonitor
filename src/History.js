@@ -48,18 +48,28 @@ class Hiatory extends PureComponent {
       return (<h3 className="history-title">No data for selected range</h3>)
     }
 
+    const { selected } = this.props;
+
     return (
       <div className="history-panel">
         <ResponsiveContainer height={300}>
           <LineChart data={transform.getMany(this.state.buffer)} >
-            <XAxis dataKey="time" tick={false}/>
+            <XAxis dataKey="time" tick={false} />
             <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right"/>
+            <YAxis yAxisId="right" orientation="right" />
             <Tooltip formatter={(value, name) => `${value} ${this.units[name]}`} />
-            <Line yAxisId="left" dot={false} type="monotone" dataKey="CO2" stroke={Colors.C02} />
-            <Line yAxisId="left" dot={false} type="monotone" dataKey="TVOC" stroke={Colors.TVOC} />
-            <Line yAxisId="right" dot={false} type="monotone" dataKey="Temperature" stroke={Colors.Temperature} />
-            <Line yAxisId="right" dot={false} type="monotone" dataKey="Humidity" stroke={Colors.Humidity} />
+            {(selected === null || selected === "CO2") &&
+              <Line yAxisId="left" dot={false} type="monotone" dataKey="CO2" stroke={Colors.C02} />
+            }
+            {(selected === null || selected === "TVOC") &&
+              <Line yAxisId="left" dot={false} type="monotone" dataKey="TVOC" stroke={Colors.TVOC} />
+            }
+            {(selected === null || selected === "Temperature") &&
+              <Line yAxisId="right" dot={false} type="monotone" dataKey="Temperature" stroke={Colors.Temperature} />
+            }
+            {(selected === null || selected === "Humidity") &&
+              <Line yAxisId="right" dot={false} type="monotone" dataKey="Humidity" stroke={Colors.Humidity} />
+            }
           </LineChart>
         </ResponsiveContainer>
       </div>
