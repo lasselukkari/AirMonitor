@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "color": "^3.1.2",
     "react": "^16.9.0",
     "react-datetime-range-picker": "^2.0.5",
     "react-dom": "^16.9.0",
