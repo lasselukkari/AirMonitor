@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import DatetimeRangePicker from 'react-datetime-range-picker';
 import Colors from './Colors'
 import transform from './transform'
