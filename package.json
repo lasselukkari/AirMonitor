@@ -4,11 +4,12 @@
   "private": true,
   "dependencies": {
     "color": "^3.1.2",
-    "react": "^16.9.0",
+    "moment": "^2.24.0",
+    "react": "^16.10.2",
+    "react-datetime": "^2.16.3",
     "react-datetime-range-picker": "^2.0.5",
-    "react-dom": "^16.9.0",
-    "react-scripts": "2.1.3",
-    "recharts": "^1.4.2"
+    "react-dom": "^16.10.2",
+    "recharts": "^1.7.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -25,7 +26,8 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "awot-scripts": "0.0.31"
+    "awot-scripts": "0.0.31",
+    "react-scripts": "3.2.0"
   },
   "awot-static": {
     "sources": "./build",
