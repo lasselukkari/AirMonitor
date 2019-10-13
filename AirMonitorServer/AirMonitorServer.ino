@@ -10,9 +10,7 @@
 
 #define BASE_DIR "/airmon"
 
-char ssid[] = "";                // leave empty to disable
-char pass[] = "";
-char apSsid[] = "AirMonitor";    // leave empty to disable
+char apSsid[] = "AirMonitor";
 char apPass[] = "AirMonitor";
 
 int resetPin = 0;                // press the boot mode pin for 5 seconds to reset the measurement history
@@ -21,7 +19,6 @@ int measurementInterval = 10000; // 10 seconds
 
 int measurementCount = 0;
 int failCount = 0;
-int maxFails = 5;
 
 int co2;
 int tvoc;
@@ -53,7 +50,7 @@ void setTime(Request &req, Response &res) {
   RtcDateTime time = RtcDateTime(atoi((char *)&buffer));
   Rtc.SetDateTime(time);
 
-  lastMeasurement = 0;
+  timestamp = Rtc.GetDateTime().Epoch32Time();
 
   res.sendStatus(204);
 }
@@ -65,6 +62,34 @@ void getCurrent(Request &req, Response &res) {
   res.write((byte *)&temperature, 4);
   res.write((byte *)&humidity, 4);
   res.write((byte *)&timestamp, 4);
+}
+
+void getRanges(Request &req, Response &res) {
+  File root = SD.open(BASE_DIR);
+
+  File file = root.openNextFile();
+  if (!file) {
+    return;
+  }
+
+  res.set("Content-Type", "application/binary");
+
+  while (file) {
+    char filename[16];
+    if (!file.getName(filename, 16)) {
+      return res.sendStatus(500);
+    }
+
+    char epochDay[6];
+    strncpy(epochDay, filename, 5);
+    epochDay[5] = '\0';
+    int day = atoi(epochDay);
+
+    res.write((byte *)&day, 4);
+
+    file.close();
+    file = root.openNextFile();
+  }
 }
 
 void getRange(Request &req, Response &res) {
@@ -82,21 +107,10 @@ void getRange(Request &req, Response &res) {
   int end = atoi(endBuf);
 
   File root = SD.open(BASE_DIR);
-  if (!root) {
-    return res.sendStatus(500);
-  }
-
-  if (!root.isDirectory()) {
-    return res.sendStatus(500);
-  }
 
   File file = root.openNextFile();
   if (!file) {
     return;
-  }
-
-  if (file.isDirectory()) {
-    return res.sendStatus(500);
   }
 
   res.set("Content-Type", "application/binary");
@@ -127,6 +141,59 @@ void getRange(Request &req, Response &res) {
   }
 }
 
+void getConnection(Request &req, Response &res) {
+  if (WiFi.status() != WL_CONNECTED) {
+    return res.sendStatus(204);
+  }
+
+  res.print(WiFi.SSID());
+  res.print(": ");
+  res.print(WiFi.localIP());
+}
+
+void createConnection(Request &req, Response &res) {
+  char ssidBuffer[33];
+  char passwordBuffer[33];
+
+  char name[10];
+  char value[33];
+
+  while (req.left()) {
+    req.form(name, 10, value, 33);
+    if (strcmp(name, "ssid") == 0) {
+      strcpy (ssidBuffer, value);
+    } else if (strcmp(name, "password") == 0) {
+      strcpy (passwordBuffer, value);
+    } else {
+      res.sendStatus(400);
+      return;
+    }
+  }
+
+  WiFi.begin(ssidBuffer, passwordBuffer);
+
+  unsigned long timeout = millis() + 20000;
+  while (WiFi.status() != WL_CONNECTED && millis() < timeout) {
+    delay(1000);
+  }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    res.print("Connection failed");
+    return;
+  }
+
+  return getConnection(req, res);
+}
+
+void removeConnection(Request &req, Response &res) {
+  if (!WiFi.disconnect(false, true)) {
+    res.sendStatus(500);
+    return;
+  }
+
+  res.sendStatus(204);
+}
+
 void runMeasurements() {
   uint16_t eco2, etvoc, errstat, raw;
   ccs811.read(&eco2, &etvoc, &errstat, &raw);
@@ -136,7 +203,7 @@ void runMeasurements() {
   }
 
   co2 = (int) eco2;
-  tvoc =(int) etvoc;
+  tvoc = (int) etvoc;
   temperature = hdc1080.readTemperature();
   humidity = hdc1080.readHumidity();
   timestamp = Rtc.GetDateTime().Epoch32Time();
@@ -200,19 +267,21 @@ void setupAccessPoint() {
 }
 
 void setupWifi() {
-  if ((ssid != NULL) && (ssid[0] != '\0')) {
-    WiFi.begin(ssid, pass);
+  WiFi.begin();
 
-    unsigned long start = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - start <= 10000) {
-      delay(500);
-      Serial.print(".");
-    }
-    Serial.println();
-
-    Serial.print("Network IP: ");
-    Serial.println(WiFi.localIP());
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - start <= 10000) {
+    delay(500);
+    Serial.print(".");
   }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    return;
+  }
+
+  Serial.println();
+  Serial.print("Network IP: ");
+  Serial.println(WiFi.localIP());
 }
 
 void setupHardware() {
@@ -236,7 +305,11 @@ void setupHardware() {
 void setupServer() {
   app.get("/api/current", &getCurrent);
   app.get("/api/history", &getRange);
+  app.get("/api/ranges", &getRanges);
   app.put("/api/time", &setTime);
+  app.get("/api/connection", &getConnection);
+  app.post("/api/connection", &createConnection);
+  app.del("/api/connection", &removeConnection);
   app.route(staticFiles());
 
   server.begin();

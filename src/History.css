@@ -1,25 +1,11 @@
-.history-panel {
-  margin-top: 60px;
-  background: #fff;
-}
-
-.history-title {
-  margin: 20px;
-}
-
-.form-control {
-  padding: 15px 22px;
-  margin: 0 5px;
-}
-  
 .range-picker {
   text-align: center;
 }
-  
-.rdt {
-  display: inline-block;
-}
 
-.rdtPicker {
-  top: -270px;
+.range-picker .select {
+  padding: 15px 22px;
+  margin: 0 5px;
+  width: 240px;
+  font-weight: bold;
+  font-size: 16px;
 }
