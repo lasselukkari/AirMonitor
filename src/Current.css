@@ -2,6 +2,7 @@
   color: #ffffff;
   width: 25%;
   display: inline-block;
+  cursor: pointer;
 }
 
 .value-container {
