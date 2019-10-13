@@ -20,4 +20,4 @@ The sketch directory is ready for uploading after you have installed the require
 * [CCS811](https://github.com/maarten-pennings/CCS811)
 
 ## User Interface
-<img src="https://i.imgur.com/a27zUOH.png" width="800" />
+<img src="https://i.imgur.com/IMvQfj2.png" width="800" />
