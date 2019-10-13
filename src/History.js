@@ -1,26 +1,46 @@
-import React, { PureComponent } from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import DatetimeRangePicker from 'react-datetime-range-picker';
-import Colors from './Colors'
+import React, { Component } from 'react';
+import DatePicker from 'react-datepicker';
+import Chart from './Chart'
 import transform from './transform'
 import './History.css';
 
-class Hiatory extends PureComponent {
-  units = { CO2: 'ppm', TVOC: 'ppm', Temperature: '℃', Humidity: '%' }
+import "react-datepicker/dist/react-datepicker.css";
+
+class History extends Component {
+  state = {
+    start: new Date(),
+    end: new Date()
+  }
   start = new Date()
   end = new Date()
-  epochWeek = (date) => Math.floor(date.getTime() / 1000 / 86400);
+  epochDay = (date) => Math.floor(date.getTime() / 1000 / 86400);
 
-  changeRange = ({ start, end }) => {
+  changeStart = (start) => {
     this.start = start;
-    this.end = end;
-
     this.fetchHistory();
   }
 
+  changeEnd = (end) => {
+    this.end = end;
+    this.fetchHistory();
+  }
+
+  fetchRanges = async () => {
+    const response = await fetch('/api/ranges');
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const buffer = await response.arrayBuffer();
+
+    const ranges = transform.getRanges(buffer);
+
+    this.setState({ ranges })
+  }
+
   fetchHistory = async () => {
-    const start = this.epochWeek(this.start);
-    const end = this.epochWeek(this.end);
+    const start = this.epochDay(this.start);
+    const end = this.epochDay(this.end);
 
     const response = await fetch(`/api/history?start=${start}&end=${end}`);
     if (!response.ok) {
@@ -28,7 +48,7 @@ class Hiatory extends PureComponent {
     }
 
     const buffer = await response.arrayBuffer();
-    this.setState({ buffer })
+    this.setState({ buffer, start: this.start, end: this.end })
   }
 
   async pollHistory() {
@@ -39,60 +59,54 @@ class Hiatory extends PureComponent {
     }
   }
 
-  getChart() {
-    if (!this.state || !this.state.buffer) {
-      return (<h3 className="history-title">Loading...</h3>)
-    }
-
-    if (this.state.buffer.byteLength <= 0) {
-      return (<h3 className="history-title">No data for selected range</h3>)
-    }
-
-    const { selected } = this.props;
-
-    return (
-      <div className="history-panel">
-        <ResponsiveContainer height={300}>
-          <LineChart data={transform.getMany(this.state.buffer)} >
-            <XAxis dataKey="time" tick={false} />
-            <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right" />
-            <Tooltip formatter={(value, name) => `${value} ${this.units[name]}`} />
-            {(selected === null || selected === "CO2") &&
-              <Line yAxisId="left" dot={false} type="monotone" dataKey="CO2" stroke={Colors.C02} />
-            }
-            {(selected === null || selected === "TVOC") &&
-              <Line yAxisId="left" dot={false} type="monotone" dataKey="TVOC" stroke={Colors.TVOC} />
-            }
-            {(selected === null || selected === "Temperature") &&
-              <Line yAxisId="right" dot={false} type="monotone" dataKey="Temperature" stroke={Colors.Temperature} />
-            }
-            {(selected === null || selected === "Humidity") &&
-              <Line yAxisId="right" dot={false} type="monotone" dataKey="Humidity" stroke={Colors.Humidity} />
-            }
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    )
-  }
-
   componentDidMount() {
+    this.fetchRanges();
     this.pollHistory();
   }
 
   render() {
+    const { selected } = this.props;
+    const { start, end, buffer, ranges } = this.state;
+
+    const StartButton = React.forwardRef(({ onClick }, ref) => (
+      <button className="select react-datepicker__day--selected" onClick={onClick}>
+        {start.toLocaleDateString()}
+      </button>
+    ));
+    const EndButton = React.forwardRef(({ onClick }, ref) => (
+      <button className="select react-datepicker__day--selected" onClick={onClick}>
+        {end.toLocaleDateString()}
+      </button>
+    ));
+
     return (
       <React.Fragment>
-        {this.getChart()}
-        <DatetimeRangePicker
-          onChange={this.changeRange}
-          timeFormat={false}
-          className={"range-picker"}
-          closeOnSelect
-        />
+        <Chart buffer={buffer} selected={selected} />
+        <div className="range-picker">
+          <DatePicker
+            customInput={<StartButton />}
+            onChange={this.changeStart}
+            selected={start}
+            includeDates={ranges}
+            startDate={start}
+            endDate={end}
+            maxDate={end}
+            selectsStart
+          />
+          <DatePicker
+            customInput={<EndButton />}
+            onChange={this.changeEnd}
+            selected={end}
+            includeDates={ranges}
+            startDate={start}
+            endDate={end}
+            minDate={start}
+            selectsEnd
+          />
+        </div>
       </React.Fragment>
     )
   }
 }
 
-export default Hiatory;
+export default History;

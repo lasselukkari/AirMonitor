@@ -2,6 +2,8 @@ import React, { PureComponent } from 'react';
 import Color from 'color'
 import transform from './transform'
 import Colors from './Colors'
+import Connection from './Connection'
+import Clock from './Clock'
 import './Current.css'
 
 class Current extends PureComponent {
@@ -25,10 +27,6 @@ class Current extends PureComponent {
     }
   }
 
-  componentDidMount() {
-    this.pollCurrent();
-  }
-
   syncClock = async () => {
     await fetch(`/api/time`, {
       method: 'PUT',
@@ -38,22 +36,28 @@ class Current extends PureComponent {
     this.fetchCurrent();
   }
 
-  getPanel(title, color) {
+  getPanel(title) {
+    const color = Colors[title];
     const { setSelected, selected } = this.props;
     const lightColor = Color(color).alpha(0.5).lighten(0.5);
     const panelStyle = { backgroundColor: color };
     const containerStyle = { backgroundColor: selected === title ? lightColor : color };
+    const value = this.state[title] !== undefined ? this.state[title].toFixed(2) : "..."
 
     return (
       <div onClick={() => setSelected(title)} className="value-panel" style={panelStyle}>
         <div className="value-container" style={containerStyle}>
           <h2>{title}</h2>
           <div className="value">
-            {this.state[title]} {this.units[title]}
+            {value} {this.units[title]}
           </div>
         </div>
       </div>
     )
+  }
+
+  componentDidMount() {
+    this.pollCurrent();
   }
 
   render() {
@@ -63,10 +67,11 @@ class Current extends PureComponent {
 
     return (
       <React.Fragment>
-        <div className="timestamp">
-          <button title="Sync RTC" onClick={this.syncClock}>{this.state.time}</button>
+        <div className="info">
+          <Connection />
+          <Clock time={this.state.time} onUpdate={() => this.fetchCurrent()} />
         </div>
-        {this.getPanel('CO2', Colors.C02)}
+        {this.getPanel('CO2', Colors.CO2)}
         {this.getPanel('TVOC', Colors.TVOC)}
         {this.getPanel('Temperature', Colors.Temperature)}
         {this.getPanel('Humidity', Colors.Humidity)}

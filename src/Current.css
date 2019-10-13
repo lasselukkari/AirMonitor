@@ -14,15 +14,36 @@
   font-size: 36px;
 }
 
-.timestamp{
-  background: #0DAB76;
+.info {
   color: #fff;
+  background: #0DAB76;
   font-size: 16px;
-  text-align: right;
   padding: 10px;
 }
 
+
+.info form {
+  width: 300px;
+  display: inline-block;
+}
+
+.info input {
+  height: 10px;
+}
+
+.info input[type=text] {
+  width: 80px;
+}
+
 .timestamp button {
+
+}
+
+#timestamp{
+  float: right;
+}
+
+.info button {
   background:none;
   border:none;
   margin:0;
@@ -57,5 +78,16 @@
     margin-top: 10px;
     font-size: 18px;
     margin-top: 0;
+  }
+}
+
+@media (max-width: 460px) {
+  .info {
+    height: 60px
+  }
+
+  .info button{
+    height: 30px;
+    width: 100%
   }
 }
