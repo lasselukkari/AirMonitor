@@ -41,7 +41,7 @@ class Chart extends PureComponent {
         <ResponsiveContainer>
           <LineChart data={transform.getMany(buffer)} >
             <XAxis
-              dataKey="time"
+              dataKey="Timestamp"
               interval="preserveStartEnd"
               type={"number"}
               domain={['dataMin', 'dataMax']}

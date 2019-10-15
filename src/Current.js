@@ -69,7 +69,7 @@ class Current extends PureComponent {
       <React.Fragment>
         <div className="info">
           <Connection />
-          <Clock time={this.state.time} onUpdate={() => this.fetchCurrent()} />
+          <Clock time={this.state.Timestamp} onUpdate={() => this.fetchCurrent()} />
         </div>
         {this.getPanel('CO2', Colors.CO2)}
         {this.getPanel('TVOC', Colors.TVOC)}

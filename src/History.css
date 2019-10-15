@@ -1,11 +1,17 @@
-.range-picker {
+.control-container {
   text-align: center;
 }
 
-.range-picker .select {
+.control-container button {
   padding: 15px 22px;
-  margin: 0 5px;
-  width: 240px;
+  margin: 5px;
   font-weight: bold;
   font-size: 16px;
+  border-radius: 0.3rem;
+}
+
+.range-select {
+  width: 240px;
+  color: #fff;
+  background-color: #216ba5;
 }
