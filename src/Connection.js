@@ -1,17 +1,17 @@
 import React, { PureComponent } from 'react';
 
 class Connection extends PureComponent {
-  state = { ssid: "", password: "", connecting: false }
+  state = { ssid: "", password: "", connecting: true }
 
   async createConnnection() {
-    this.setState({connecting: true});
+    this.setState({ connecting: true });
     try {
       const { ssid, password } = this.state;
       const formData = new FormData();
       formData.append('ssid', ssid);
       formData.append('password', password);
       const data = new URLSearchParams(formData);
-  
+
       const response = await fetch('/api/connection', {
         method: 'POST',
         body: data,
@@ -19,8 +19,8 @@ class Connection extends PureComponent {
 
       const connection = await response.text();
       this.setState({ connection });
-    } finally  {
-      this.setState({connecting: false})
+    } finally {
+      this.setState({ connecting: false })
     }
   }
 
@@ -31,7 +31,7 @@ class Connection extends PureComponent {
     }
 
     const connection = await response.text();
-    this.setState({ connection });
+    this.setState({ connection, connecting: false });
   }
 
   removeConnection = () => {
@@ -54,8 +54,8 @@ class Connection extends PureComponent {
   render() {
     const { connection, ssid, password, connecting } = this.state;
 
-    if(connecting){
-      return  (<React.Fragment>Connecting...</React.Fragment>)
+    if (connecting) {
+      return (<React.Fragment>Connecting...</React.Fragment>)
     }
 
     if (connection) {

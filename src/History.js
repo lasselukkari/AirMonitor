@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import DatePicker from 'react-datepicker';
+import download from 'downloadjs'
 import Chart from './Chart'
 import transform from './transform'
 import './History.css';
@@ -59,6 +60,18 @@ class History extends Component {
     }
   }
 
+  exportCSV = () => {
+    const { start, end, buffer } = this.state;
+    const items = transform.getMany(buffer);
+    const keys = Object.keys(items[0]);
+    const data = items.map(row => keys.map(key => row[key]).join(','));
+    const csv = `${keys}\r\n${data.join('\r\n')}`;
+    const startDate = start.toLocaleDateString();
+    const endDate = end.toLocaleDateString();
+    const filename = `AirMonitor-${startDate}-${endDate}.csv`;
+    download(csv, filename, "text/csv");
+  }
+
   componentDidMount() {
     this.fetchRanges();
     this.pollHistory();
@@ -69,12 +82,12 @@ class History extends Component {
     const { start, end, buffer, ranges } = this.state;
 
     const StartButton = React.forwardRef(({ onClick }, ref) => (
-      <button className="select react-datepicker__day--selected" onClick={onClick}>
+      <button className="control-button range-select" onClick={onClick}>
         {start.toLocaleDateString()}
       </button>
     ));
     const EndButton = React.forwardRef(({ onClick }, ref) => (
-      <button className="select react-datepicker__day--selected" onClick={onClick}>
+      <button className="control-button range-select" onClick={onClick}>
         {end.toLocaleDateString()}
       </button>
     ));
@@ -82,7 +95,7 @@ class History extends Component {
     return (
       <React.Fragment>
         <Chart buffer={buffer} selected={selected} />
-        <div className="range-picker">
+        <div className="control-container">
           <DatePicker
             customInput={<StartButton />}
             onChange={this.changeStart}
@@ -103,6 +116,11 @@ class History extends Component {
             minDate={start}
             selectsEnd
           />
+        </div>
+        <div className="control-container">
+          <button className="control-button" onClick={this.exportCSV}>
+            Export CSV
+          </button>
         </div>
       </React.Fragment>
     )
