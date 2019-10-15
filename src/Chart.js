@@ -29,7 +29,7 @@ class Chart extends PureComponent {
     const { buffer } = this.props;
 
     if (!buffer) {
-      return (<h3 className="history-title">Loading...</h3>)
+      return null
     }
 
     if (buffer.byteLength === 0) {
