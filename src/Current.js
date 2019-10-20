@@ -39,14 +39,13 @@ class Current extends PureComponent {
   getPanel(title) {
     const color = Colors[title];
     const { setSelected, selected } = this.props;
-    const lightColor = Color(color).alpha(0.5).lighten(0.5);
-    const panelStyle = { backgroundColor: color };
-    const containerStyle = { backgroundColor: selected === title ? lightColor : color };
+    const lightColor = Color(color).alpha(0.3);
+    const panelStyle = { backgroundColor: selected[title] ? color : lightColor };
     const value = this.state[title] !== undefined ? this.state[title].toFixed(2) : "..."
 
     return (
       <div onClick={() => setSelected(title)} className="value-panel" style={panelStyle}>
-        <div className="value-container" style={containerStyle}>
+        <div className="value-container">
           <h2>{title}</h2>
           <div className="value">
             {value} {this.units[title]}
