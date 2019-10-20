@@ -11,15 +11,13 @@ class Chart extends PureComponent {
   getLine(title, axis) {
     const { selected } = this.props;
 
-    if (selected !== null && selected !== title) {
-      return null;
-    }
+    const dataKey = selected[title] ? title : null;
 
     return <Line
       yAxisId={axis}
-      dot={selected !== null}
+      dot={false}
       type="monotone"
-      dataKey={title}
+      dataKey={dataKey}
       stroke={Colors[title]}
       strokeWidth={2}
     />

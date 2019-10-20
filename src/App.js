@@ -5,18 +5,19 @@ import './App.css';
 
 class App extends PureComponent {
   state = {
-    selected: null
+    CO2: true,
+    TVOC: true,
+    Temperature: true,
+    Humidity: true
   }
 
-  setSelected = (selected) =>
-    this.setState((state) => ({ selected: state.selected === selected ? null : selected }))
+  setSelected = (title) => this.setState((state) => ({ ...state, [title]: !state[title] }))
 
   render() {
-    const { selected } = this.state;
     return (
       <React.Fragment>
-        <Current setSelected={this.setSelected} selected={selected} />
-        <History selected={selected} />
+        <Current setSelected={this.setSelected} selected={this.state} />
+        <History selected={this.state} />
       </React.Fragment>
     )
   }
