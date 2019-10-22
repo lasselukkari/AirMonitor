@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Colors from './Colors'
-import transform from './transform'
 
 import './Chart.css'
 
@@ -24,20 +23,10 @@ class Chart extends PureComponent {
   }
 
   render() {
-    const { buffer } = this.props;
-
-    if (!buffer) {
-      return null
-    }
-
-    if (buffer.byteLength === 0) {
-      return (<h3 className="history-title">No data for selected range</h3>)
-    }
-
     return (
       <div className="chart-panel">
         <ResponsiveContainer>
-          <LineChart data={transform.getMany(buffer)} >
+          <LineChart data={this.props.data} >
             <XAxis
               dataKey="Timestamp"
               interval="preserveStartEnd"
