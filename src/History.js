@@ -40,8 +40,8 @@ class History extends Component {
   }
 
   fetchHistory = async () => {
-    const start = this.epochDay(this.start);
-    const end = this.epochDay(this.end);
+    const start = this.epochDay(this.start) - 1;
+    const end = this.epochDay(this.end) + 1;
 
     const response = await fetch(`/api/history?start=${start}&end=${end}`);
     if (!response.ok) {
@@ -77,9 +77,25 @@ class History extends Component {
     this.pollHistory();
   }
 
+  getLocalizedRange() {
+    const { start, end, buffer } = this.state;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    startDate.setHours(0, 0, 0);
+    endDate.setHours(0, 0, 0);
+    endDate.setDate(endDate.getDate() + 1);
+
+    const startTime = startDate.getTime();
+    const endTime = endDate.getTime();
+
+    return transform.getMany(buffer).filter(({ Timestamp }) =>
+      (Timestamp > startTime) && (Timestamp < endTime));
+  }
+
   render() {
     const { selected } = this.props;
-    const { start, end, buffer, ranges } = this.state;
+    const { start, end, ranges } = this.state;
 
     const StartButton = React.forwardRef(({ onClick }, ref) => (
       <button className="control-button range-select" onClick={onClick}>
@@ -94,7 +110,7 @@ class History extends Component {
 
     return (
       <React.Fragment>
-        <Chart buffer={buffer} selected={selected} />
+        <Chart data={this.getLocalizedRange()} selected={selected} />
         <div className="control-container">
           <DatePicker
             customInput={<StartButton />}
