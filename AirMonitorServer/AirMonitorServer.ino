@@ -6,6 +6,7 @@
 #include <aWOT.h>                // v1.1.0  https://github.com/lasselukkari/aWOT
 #include <ClosedCube_HDC1080.h>  // v1.3.2  https://github.com/closedcube/ClosedCube_HDC1080_Arduino/releases
 #include <ccs811.h>              // v10.0.0 https://github.com/maarten-pennings/CCS811
+#include <SSD1306Wire.h>         // v4.0.0  https://github.com/ThingPulse/esp8266-oled-ssd1306
 #include "StaticFiles.h"
 
 #define BASE_DIR "/airmon"
@@ -38,6 +39,7 @@ ClosedCube_HDC1080 hdc1080;
 CCS811 ccs811(-1);
 RtcDS1307<TwoWire> Rtc(Wire);
 SdFat SD;
+SSD1306Wire display(0x3c, SDA, SCL, GEOMETRY_128_64);
 WiFiServer server(80);
 Application app;
 
@@ -251,6 +253,42 @@ void recordMeasurements() {
   measurementCount = 0;
 }
 
+void drawString(int x, int y, char* buffer) {
+  display.drawString(x + 32, y, buffer);
+}
+
+void displayMeasurements() {
+  char buffer [33];
+
+  display.clear();
+
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  itoa (co2, buffer, 10);
+  drawString(0, 0, "C02");
+  display.setTextAlignment(TEXT_ALIGN_RIGHT);
+  drawString(64, 0, buffer);
+
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  itoa (tvoc, buffer, 10);
+  drawString(0, 10, "TVOC");
+  display.setTextAlignment(TEXT_ALIGN_RIGHT);
+  drawString(64, 10, buffer);
+
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  gcvt (temperature, 3, buffer);
+  drawString(0, 20, "TEMP");
+  display.setTextAlignment(TEXT_ALIGN_RIGHT);
+  drawString(64, 20, buffer);
+
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  gcvt (humidity, 3, buffer);
+  drawString(0, 30, "RH");
+  display.setTextAlignment(TEXT_ALIGN_RIGHT);
+  drawString(64, 30, buffer);
+
+  display.display();
+}
+
 void removeData() {
   File root = SD.open(BASE_DIR);
   root.rmRfStar();
@@ -300,6 +338,9 @@ void setupHardware() {
   ccs811.start(CCS811_MODE_10SEC);
 
   hdc1080.begin(0x40);
+
+  display.init();
+  display.setFont(ArialMT_Plain_10);
 }
 
 void setupServer() {
@@ -318,8 +359,8 @@ void setupServer() {
 void setup() {
   Serial.begin(115200);
   setupAccessPoint();
-  setupWifi();
   setupHardware();
+  setupWifi();
   setupServer();
 }
 
@@ -329,6 +370,7 @@ void loop() {
   if (now - lastMeasurement > measurementInterval) {
     lastMeasurement = now;
     runMeasurements();
+    displayMeasurements();
   }
 
   if (now - lastRecord > recordInterval) {
