@@ -254,7 +254,7 @@ void recordMeasurements() {
 }
 
 void drawString(int x, int y, char* buffer) {
-  display.drawString(x + 32, y, buffer);
+  display.drawString(x + 32, y + 16, buffer);
 }
 
 void displayMeasurements() {
@@ -340,6 +340,7 @@ void setupHardware() {
   hdc1080.begin(0x40);
 
   display.init();
+  display.flipScreenVertically();
   display.setFont(ArialMT_Plain_10);
 }
 
