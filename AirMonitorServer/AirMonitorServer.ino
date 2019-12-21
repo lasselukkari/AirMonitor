@@ -198,16 +198,21 @@ void removeConnection(Request &req, Response &res) {
 
 void runMeasurements() {
   uint16_t eco2, etvoc, errstat, raw;
-  ccs811.read(&eco2, &etvoc, &errstat, &raw);
+  temperature = hdc1080.readTemperature();
+  humidity = hdc1080.readHumidity();
 
+  if(!ccs811.set_envdata((temperature+25)*256, humidity*512)){
+    return;
+  }
+
+  ccs811.read(&eco2, &etvoc, &errstat, &raw);
   if (errstat != CCS811_ERRSTAT_OK) {
     return;
   }
 
   co2 = (int) eco2;
   tvoc = (int) etvoc;
-  temperature = hdc1080.readTemperature();
-  humidity = hdc1080.readHumidity();
+
   timestamp = Rtc.GetDateTime().Epoch32Time();
 
   co2Sum += co2;
