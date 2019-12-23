@@ -1,3 +1,4 @@
+#include <Preferences.h>
 #include <SPI.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -11,12 +12,17 @@
 
 #define BASE_DIR "/airmon"
 
+Preferences preferences;
+
 char apSsid[] = "AirMonitor";
 char apPass[] = "AirMonitor";
 
 int resetPin = 0;                // press the boot mode pin for 5 seconds to reset the measurement history
 int recordInterval = 300000;     // 5 minutes
 int measurementInterval = 10000; // 10 seconds
+int baselineRecordInterval = 86400000; // 24 hours
+int baselineLoadDelay = 1800000; // 30 minutes
+bool baselineRestorored = false;
 
 int measurementCount = 0;
 int failCount = 0;
@@ -34,6 +40,7 @@ float humiditySum = 0.0;
 
 unsigned long lastMeasurement = 0;
 unsigned long lastRecord = 0;
+unsigned long lastBaselineRecord = 0;
 
 ClosedCube_HDC1080 hdc1080;
 CCS811 ccs811(-1);
@@ -364,6 +371,7 @@ void setupServer() {
 
 void setup() {
   Serial.begin(115200);
+  preferences.begin("airmon", false);
   setupAccessPoint();
   setupHardware();
   setupWifi();
@@ -372,6 +380,16 @@ void setup() {
 
 void loop() {
   unsigned long now = millis();
+
+  if (now > baselineLoadDelay && !baselineRestorored) {
+    int16_t baseline = preferences.getShort("baseline", 0);
+
+    if(baseline != 0){
+      ccs811.set_baseline(baseline);
+    }
+
+    baselineRestorored = true;
+  }
 
   if (now - lastMeasurement > measurementInterval) {
     lastMeasurement = now;
@@ -382,6 +400,13 @@ void loop() {
   if (now - lastRecord > recordInterval) {
     lastRecord = now;
     recordMeasurements();
+  }
+
+  if (now - lastBaselineRecord > baselineRecordInterval) {
+    lastBaselineRecord = now;
+    uint16_t baseline;
+    ccs811.get_baseline(&baseline);
+    preferences.putShort("baseline", baseline);
   }
 
   while (digitalRead(resetPin) == LOW) {
