@@ -1,11 +1,14 @@
 #include <EEPROM.h>
+#include <Wire.h>
 #include <SPI.h>
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
 #else
 #include <WiFi.h>
 #endif
-#include <Wire.h>
+#include <WiFiUdp.h>
+
+#include <NTPClient.h>           // v3.2.0  https://github.com/arduino-libraries/NTPClient
 #include <SdFat.h>               // v1.2.3  https://github.com/adafruit/SdFat (for ESP32)
 #include <RtcDS1307.h>           // v2.3.3  https://github.com/Makuna/Rtc
 #include <aWOT.h>                // v1.1.0  https://github.com/lasselukkari/aWOT
@@ -48,6 +51,8 @@ unsigned long lastMeasurement = 0;
 unsigned long lastRecord = 0;
 unsigned long lastBaselineRecord = 0;
 
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
 ClosedCube_HDC1080 hdc1080;
 CCS811 ccs811(-1);
 RtcDS1307<TwoWire> Rtc(Wire);
@@ -210,6 +215,12 @@ void removeConnection(Request &req, Response &res) {
 }
 
 void runMeasurements() {
+  if (WiFi.status() == WL_CONNECTED) {
+    timeClient.update();
+    RtcDateTime dateTime = RtcDateTime((int)(timeClient.getEpochTime() - 946684800));
+    Rtc.SetDateTime(dateTime);
+  }
+
   uint16_t eco2, etvoc, errstat, raw;
   temperature = hdc1080.readTemperature();
   humidity = hdc1080.readHumidity();
@@ -334,9 +345,11 @@ void setupWifi() {
     return;
   }
 
-  Serial.println();
+
   Serial.print("Network IP: ");
   Serial.println(WiFi.localIP());
+
+  timeClient.begin();
 }
 
 void setupHardware() {
