@@ -1,22 +1,28 @@
-#include <Preferences.h>
+#include <EEPROM.h>
 #include <SPI.h>
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#else
 #include <WiFi.h>
+#endif
 #include <Wire.h>
+#include <SdFat.h>               // v1.2.3  https://github.com/adafruit/SdFat (for ESP32)
 #include <RtcDS1307.h>           // v2.3.3  https://github.com/Makuna/Rtc
-#include <SdFat.h>               // v1.2.3  https://github.com/adafruit/SdFat
 #include <aWOT.h>                // v1.1.0  https://github.com/lasselukkari/aWOT
 #include <ClosedCube_HDC1080.h>  // v1.3.2  https://github.com/closedcube/ClosedCube_HDC1080_Arduino/releases
 #include <ccs811.h>              // v10.0.0 https://github.com/maarten-pennings/CCS811
 #include <SSD1306Wire.h>         // v4.0.0  https://github.com/ThingPulse/esp8266-oled-ssd1306
 #include "StaticFiles.h"
 
-#define BASE_DIR "/airmon"
+using namespace sdfat;
 
-Preferences preferences;
+#define SD_CS_PIN SS
+#define BASE_DIR "/airmon"
 
 char apSsid[] = "AirMonitor";
 char apPass[] = "AirMonitor";
 
+int baselineAddress = 0;
 int resetPin = 0;                // press the boot mode pin for 5 seconds to reset the measurement history
 int recordInterval = 300000;     // 5 minutes
 int measurementInterval = 10000; // 10 seconds
@@ -51,8 +57,8 @@ WiFiServer server(80);
 Application app;
 
 void setTime(Request &req, Response &res) {
-  byte buffer[32];
-  if (!req.body(buffer, 32)) {
+  byte buffer[32] {};
+  if (!req.readBytes(buffer, 32)) {
     return res.sendStatus(400);
   }
 
@@ -74,9 +80,9 @@ void getCurrent(Request &req, Response &res) {
 }
 
 void getRanges(Request &req, Response &res) {
-  File root = SD.open(BASE_DIR);
+  sdfat::File root = SD.open(BASE_DIR);
 
-  File file = root.openNextFile();
+  sdfat::File file = root.openNextFile();
   if (!file) {
     return;
   }
@@ -84,12 +90,12 @@ void getRanges(Request &req, Response &res) {
   res.set("Content-Type", "application/binary");
 
   while (file) {
-    char filename[16];
+    char filename[16] {};
     if (!file.getName(filename, 16)) {
       return res.sendStatus(500);
     }
 
-    char epochDay[6];
+    char epochDay[6] {};
     strncpy(epochDay, filename, 5);
     epochDay[5] = '\0';
     int day = atoi(epochDay);
@@ -102,12 +108,12 @@ void getRanges(Request &req, Response &res) {
 }
 
 void getRange(Request &req, Response &res) {
-  char startBuf[16];
+  char startBuf[16] {};
   if (!req.query("start", startBuf, 16)) {
     return res.sendStatus(400);
   }
 
-  char endBuf[16];
+  char endBuf[16] {};
   if (!req.query("end", endBuf, 16)) {
     return res.sendStatus(400);
   }
@@ -115,9 +121,9 @@ void getRange(Request &req, Response &res) {
   int start = atoi(startBuf);
   int end = atoi(endBuf);
 
-  File root = SD.open(BASE_DIR);
+  sdfat::File root = SD.open(BASE_DIR);
 
-  File file = root.openNextFile();
+  sdfat::File file = root.openNextFile();
   if (!file) {
     return;
   }
@@ -125,12 +131,12 @@ void getRange(Request &req, Response &res) {
   res.set("Content-Type", "application/binary");
 
   while (file) {
-    char filename[16];
+    char filename[16] {};
     if (!file.getName(filename, 16)) {
       return res.sendStatus(500);
     }
 
-    char epochDay[6];
+    char epochDay[6] {};
     strncpy(epochDay, filename, 5);
     epochDay[5] = '\0';
 
@@ -161,11 +167,11 @@ void getConnection(Request &req, Response &res) {
 }
 
 void createConnection(Request &req, Response &res) {
-  char ssidBuffer[33];
-  char passwordBuffer[33];
+  char ssidBuffer[33] {};
+  char passwordBuffer[33] {};
 
-  char name[10];
-  char value[33];
+  char name[10] {};
+  char value[33] {};
 
   while (req.left()) {
     req.form(name, 10, value, 33);
@@ -195,7 +201,7 @@ void createConnection(Request &req, Response &res) {
 }
 
 void removeConnection(Request &req, Response &res) {
-  if (!WiFi.disconnect(false, true)) {
+  if (!WiFi.disconnect()) {
     res.sendStatus(500);
     return;
   }
@@ -208,7 +214,7 @@ void runMeasurements() {
   temperature = hdc1080.readTemperature();
   humidity = hdc1080.readHumidity();
 
-  if(!ccs811.set_envdata((temperature+25)*256, humidity*512)){
+  if (!ccs811.set_envdata((temperature + 25) * 256, humidity * 512)) {
     return;
   }
 
@@ -241,11 +247,11 @@ void recordMeasurements() {
   float humidityAvg = humiditySum / measurementCount;
   int nowTime = Rtc.GetDateTime().Epoch32Time();
   int epochDay = nowTime / 86400;
-  char datestring[40];
+  char datestring[40] {};
 
   snprintf(datestring, 40, BASE_DIR "/%u.bin", epochDay);
 
-  File file = SD.open(datestring, FILE_WRITE);
+  sdfat::File file = SD.open(datestring, FILE_WRITE);
   if (!file) {
     Serial.println("Failed to open file for appending");
     return;
@@ -270,7 +276,7 @@ void drawString(int x, int y, char* buffer) {
 }
 
 void displayMeasurements() {
-  char buffer [33];
+  char buffer [33] {};
 
   display.clear();
 
@@ -302,7 +308,7 @@ void displayMeasurements() {
 }
 
 void removeData() {
-  File root = SD.open(BASE_DIR);
+  sdfat::File root = SD.open(BASE_DIR);
   root.rmRfStar();
   SD.mkdir(BASE_DIR);
   Serial.println("All files removed");
@@ -322,7 +328,6 @@ void setupWifi() {
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start <= 10000) {
     delay(500);
-    Serial.print(".");
   }
 
   if (WiFi.status() != WL_CONNECTED) {
@@ -337,7 +342,12 @@ void setupWifi() {
 void setupHardware() {
   pinMode(resetPin, INPUT);
 
-  SD.begin(SS, SD_SCK_MHZ(10));
+  if (!SD.begin(SD_CS_PIN)) {
+    Serial.println("SD card initialization failed");
+  } else {
+    Serial.println("SD card initialized");
+  }
+
   SD.mkdir(BASE_DIR);
 
   Wire.begin();
@@ -371,9 +381,9 @@ void setupServer() {
 
 void setup() {
   Serial.begin(115200);
-  preferences.begin("airmon", false);
-  setupAccessPoint();
+  Serial.println();
   setupHardware();
+  setupAccessPoint();
   setupWifi();
   setupServer();
 }
@@ -382,9 +392,9 @@ void loop() {
   unsigned long now = millis();
 
   if (now > baselineLoadDelay && !baselineRestorored) {
-    int16_t baseline = preferences.getShort("baseline", 0);
+    int16_t baseline = EEPROM.read(baselineAddress);
 
-    if(baseline != 0){
+    if (baseline != 0) {
       ccs811.set_baseline(baseline);
     }
 
@@ -406,7 +416,7 @@ void loop() {
     lastBaselineRecord = now;
     uint16_t baseline;
     ccs811.get_baseline(&baseline);
-    preferences.putShort("baseline", baseline);
+    EEPROM.write(baselineAddress, baseline);
   }
 
   while (digitalRead(resetPin) == LOW) {
