@@ -8,8 +8,8 @@
 #endif
 #include <WiFiUdp.h>
 
+#include <SdFat.h>
 #include <NTPClient.h>           // v3.2.0  https://github.com/arduino-libraries/NTPClient
-#include <SdFat.h>               // v1.2.3  https://github.com/adafruit/SdFat (for ESP32)
 #include <RtcDS1307.h>           // v2.3.3  https://github.com/Makuna/Rtc
 #include <aWOT.h>                // v1.1.0  https://github.com/lasselukkari/aWOT
 #include <ClosedCube_HDC1080.h>  // v1.3.2  https://github.com/closedcube/ClosedCube_HDC1080_Arduino/releases
