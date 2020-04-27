@@ -3,12 +3,13 @@ AirMonitor is an ESP8266 based CO2, TVOC, temperature and humidity data logger.
 
 The device can be configured to be an access point or it can be connected to another network. The data can be viewed using the build in html user interface.
 
-## Parts
-* ESP32 development board
-* MicroSD card module
-* DS1307 RTC module
-* HDC1080 temperature & humidity sensor module
-* CCS811 gas sensor module
+## Hardware
+<img src="https://i.imgur.com/jmF6enj.jpg" width="600" />
+
+* ESP8266 development board
+* MicroSD card + DS1307 RTC module
+* HDC1080 + CCS811 gas sensor module
+* SSD1306 display 
 
 ### Libraries
 The sketch directory is ready for uploading after you have installed the required libraries.
@@ -20,4 +21,4 @@ The sketch directory is ready for uploading after you have installed the require
 * [NTPClient](https://github.com/arduino-libraries/NTPClient)
 
 ## User Interface
-<img src="https://i.imgur.com/IMvQfj2.png" width="800" />
+<img src="https://i.imgur.com/6P0utF8.png" width="800" />
