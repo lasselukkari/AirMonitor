@@ -7,7 +7,7 @@ import Clock from './Clock'
 import './Current.css'
 
 class Current extends PureComponent {
-  units = { CO2: 'ppm', TVOC: 'ppm', Temperature: '℃', Humidity: '%' }
+  units = { CO2: 'ppm', TVOC: 'ppb', Temperature: '℃', Humidity: '%' }
 
   async fetchCurrent() {
     const response = await fetch('/api/current');

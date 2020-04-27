@@ -5,7 +5,7 @@ import Colors from './Colors'
 import './Chart.css'
 
 class Chart extends PureComponent {
-  units = { CO2: 'ppm', TVOC: 'ppm', Temperature: '℃', Humidity: '%' }
+  units = { CO2: 'ppm', TVOC: 'ppb', Temperature: '℃', Humidity: '%' }
 
   getLine(title, axis) {
     const { selected } = this.props;
@@ -42,7 +42,7 @@ class Chart extends PureComponent {
               labelFormatter={(ts) => new Date(ts).toLocaleString()}
             />
             {this.getLine("CO2", "left")}
-            {this.getLine("TVOC", "left")}
+            {this.getLine("TVOC", "right")}
             {this.getLine("Temperature", "right")}
             {this.getLine("Humidity", "right")}
           </LineChart>
