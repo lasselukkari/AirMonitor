@@ -5,7 +5,7 @@ The device can be configured to be an access point or it can be connected to ano
 
 <img src="https://i.imgur.com/puXjko8.png" width="100%" />
 
-Note: The CO2 and TVOC will drift in the long run. To get better results use a more expensive sensor for these measurementes.
+Note: The CO2 and TVOC will drift in the long run. To get better results use a more expensive sensor for these measurements.
 
 ## Hardware
 <img src="https://i.imgur.com/jmF6enj.jpg" width="600" />
